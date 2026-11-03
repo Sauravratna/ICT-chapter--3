@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSC ICT Chapter 3 Online Exam</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #ffffff; color: #000000; line-height: 1.6; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; border: 1px solid #000000; padding: 25px; border-radius: 8px; }
+        h1, h2, h3 { text-align: center; margin-bottom: 20px; color: #000000; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #000000; border-radius: 4px; font-size: 16px; background: #fff; color: #000; }
+        .btn { display: block; width: 100%; padding: 12px; background: #000000; color: #ffffff; border: none; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 15px; }
+        .btn:hover { background: #333333; }
+        #timer-sticky { position: sticky; top: 0; background: #ffffff; border: 2px solid #000000; padding: 10px; text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px; z-index: 100; border-radius: 4px; }
+        .question-card { border-bottom: 1px dashed #000000; padding: 15px 0; }
+        .options-group { margin-top: 10px; }
+        .option-item { display: block; margin: 8px 0; cursor: pointer; }
+        .option-item input { margin-right: 10px; }
+        .hidden { display: none; }
+        .result-summary { border: 2px solid #000; padding: 15px; text-align: center; margin-bottom: 20px; border-radius: 4px; }
+        .ans-review { margin-top: 10px; padding: 10px; border: 1px solid #ccc; background: #fafafa; border-radius: 4px; }
+        .correct { color: #008000; font-weight: bold; }
+        .wrong { color: #cc0000; font-weight: bold; }
+        .explanation { background: #eeeeee; padding: 8px; margin-top: 5px; border-left: 3px solid #000; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+      <!-- Login Form -->
+    <div id="login-screen">
+        <h1>HSC ICT ৩য় অধ্যায় অনলাইন পরীক্ষা</h1>
+        <h3>সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস (২৫ নম্বর - ২৫ মিনিট)</h3>
+        <hr><br>
+        <form id="student-form" onsubmit="startExam(event)">
+            <div class="form-group">
+                <label for="student-name">শিক্ষার্থীর নাম:</label>
+                <input type="text" id="student-name" required placeholder="আপনার নাম লিখুন">
+            </div>
+            <div class="form-group">
+                <label for="student-roll">রোল নম্বর:</label>
+                <input type="text" id="student-roll" required placeholder="আপনার রোল নম্বর লিখুন">
+            </div>
+            <button type="submit" class="btn">পরীক্ষা শুরু করুন</button>
+        </form>
+    </div>
+
+    <!-- Exam Screen -->
+    <div id="exam-screen" class="hidden">
+        <div id="timer-sticky">অবশিষ্ট সময়: <span id="timer">25:00</span></div>
+        <form id="quiz-form">
+            <div id="questions-container"></div>
+            <button type="button" class="btn" onclick="submitExam()">পরীক্ষা জমা দিন</button>
+        </form>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="hidden">
+        <h2>পরীক্ষার ফলাফল</h2>
+        <div class="result-summary" id="result-summary"></div>
+        <div id="review-container"></div>
+    </div>
+                  </div>
+                  <script>
+const questions = [
+    { q: "১. (10110)₂ এর সমতুল্য দশমিক (Decimal) মান কত?", options: ["20", "22", "24", "26"], ans: 1, exp: "10110₂ = (1×16) + (0×8) + (1×4) + (1×2) + (0×1) = 16 + 0 + 4 + 2 + 0 = 22" },
+    { q: "২. হেক্সাডেসিমেল পদ্ধতিতে 'F' এর সমতুল্য দশমিক মান কত?", options: ["10", "12", "15", "16"], ans: 2, exp: "হেক্সাডেসিমেলে A=10, B=11, C=12, D=13, E=14, F=15" },
+    { q: "৩. 2's complement নির্ণয়ের সূত্র কোনটি?", options: ["1's complement - 1", "1's complement + 1", "1's complement × 2", "NOT + AND"], ans: 1, exp: "1's complement-এর সাথে 1 যোগ করলে 2's complement পাওয়া যায়।" },
+    { q: "৪. কোন গেটটি মৌলিক গেট নয়?", options: ["AND", "OR", "NAND", "NOT"], ans: 2, exp: "মৌলিক গেট ৩টি: AND, OR, NOT। NAND হলো একটি সর্বজনীন গেট।" },
+    { q: "৫. (77)₈ এর পরবর্তী সংখ্যাটি কত?", options: ["78", "100", "80", "101"], ans: 1, exp: "অক্টালে 7 এর পর হাতে 1 থাকে। 77₈ + 1 = 100₈" },
+    { q: "৬. A + A' = কত?", options: ["0", "1", "A", "A'"], ans: 1, exp: "বুলিয়ান আলজেব্রার মৌলিক উপপাদ্য অনুযায়ী A + A' = 1" },
+    { q: "৭. ন্যান্ড (NAND) গেটের আউটপুট 0 হয় কখন?", options: ["সকল ইনপুট 0 হলে", "সকল ইনপুট 1 হলে", "যেকোনো একটি 0 হলে", "যেকোনো একটি 1 হলে"], ans: 1, exp: "AND গেটের উল্টো NAND গেট। সব ইনপুট 1 হলে AND-এর মান 1 হয়, তাই NAND-এর মান 0 হয়।" },
+    { q: "৮. BCD কোড কত বিটের হয়?", options: ["2 বিট", "4 বিট", "8 বিট", "16 বিট"], ans: 1, exp: "BCD (Binary Coded Decimal) কোড সাধারণত 4 বিটের হয়।" },
+    { q: "৯. ASCII-8 কোড দ্বারা মোট কতটি অনন্য চিহ্ন নির্দিষ্ট করা যায়?", options: ["128", "256", "512", "1024"], ans: 1, exp: "2⁸ = 256টি চিহ্ন নির্দেশ করা যায়।" },
+    { q: "১০. একটি এনকোডারের ৩টি ইনপুট হলে আউটপুট কতটি হবে (যদি ইনপুট 2ⁿ হয়)?", options: ["2টি", "3টি", "8টি", "16টি"], ans: 1, exp: "এনকোডারে 2ⁿ টি ইনপুট হলে আউটপুট হয় n টি। এখানে 2³=8 টি ইনপুট হলে আউটপুট 3টি।" },
+    { q: "১১. ডিকোডার (Decoder) এর কাজ কী?", options: ["মানুষের ভাষাকে কম্পিউটারের ভাষায় রূপান্তর", "কম্পিউটারের ভাষাকে মানুষের বোধগম্য ভাষায় রূপান্তর", "বাইনারি যোগ করা", "ডাটা সংরক্ষণ করা"], ans: 1, exp: "ডিকোডার ডিজিটাল সংকেতকে মানুষের বোধগম্য সংকেতে রূপান্তর করে।" },
+    { q: "১২. ডাবল উল্টানো (A'') এর মান কত?", options: ["0", "1", "A", "A'"], ans: 2, exp: "বুলিয়ান দ্বৈত পরিপূরক নিয়ম অনুযায়ী (A'') = A" },
+    { q: "১৩. অক্টাল সংখ্যা পদ্ধতির বেস বা ভিত্তি কত?", options: ["2", "8", "10", "16"], ans: 1, exp: "অক্টাল সংখ্যা পদ্ধতিতে মোট 8টি প্রতীক (0-7) ব্যবহৃত হয়।" },
+    { q: "১৪. 1+1+1 (বাইনারি যোগে) এর যোগফল ও ক্যারী কত?", options: ["Sum=0, Carry=1", "Sum=1, Carry=1", "Sum=1, Carry=0", "Sum=0, Carry=0"], ans: 1, exp: "1+1+1 = 3 (Decimal) = 11 (Binary)। সুতরাং যোগফল (Sum) = 1 এবং হাতে (Carry) = 1" },
+    { q: "১৫. ডিমরগানের প্রথম উপপাদ্য কোনটি?", options: ["(A+B)' = A' . B'", "(A.B)' = A' + B'", "A+B = B+A", "A.(B+C) = AB+AC"], ans: 0, exp: "ডিমরগানের ১ম উপপাদ্য: (A+B)' = A' . B'" },
+    { q: "১৬. যে লজিক গেটের সকল ইনপুট সমান হলে আউটপুট 1 হয় তাকে কী বলে?", options: ["XOR", "XNOR", "NAND", "NOR"], ans: 1, exp: "XNOR গেটে বিজোড় সংখ্যক 1 এ আউটপুট 0 এবং ইনপুট সমান হলে আউটপুট 1 হয়।" },
+    { q: "১৭. ফ্লিপ-ফ্লপ (Flip-Flop) সার্কিট কত বিট ডাটা সংরক্ষণ করতে পারে?", options: ["1 বিট", "2 বিট", "4 বিট", "8 বিট"], ans: 0, exp: "একটি ফ্লিপ-ফ্লপ মেমোরি এলিমেন্ট হিসেবে ১ বিট বাইনারি তথ্য জমা রাখতে পারে।" },
+    { q: "১৮. ফুল অ্যাডার (Full Adder) তৈরিতে কয়টি হাফ অ্যাডার প্রয়োজন?", options: ["১টি", "২টি", "৩টি", "৪টি"], ans: 1, exp: "২টি হাফ-অ্যাডার এবং ১টি OR গেট দিয়ে ১টি ফুল-অ্যাডার তৈরি করা যায়।" },
+    { q: "১৯. (10)₁₀ এর বাইনারি মান কত?", options: ["1000", "1010", "1100", "1110"], ans: 1, exp: "10-কে ২ দিয়ে ভাগ করলে বাইনারি মান পাওয়া যায় 1010।" },
+    { q: "২০. ইউনিকোড (Unicode) কত বিটের?", options: ["8 বিট", "16 বিট", "32 বিট", "64 বিট"], ans: 1, exp: "ইউনিকোড মূলত 16 বিটের কোড (2¹⁶ = 65,536টি অক্ষর)।" },
+    { q: "২১. NOR গেটের সাথে কোন গেট যুক্ত করলে তা OR গেট হয়?", options: ["AND", "OR", "NOT", "NAND"], ans: 2, exp: "NOR এর আউটপুটকে NOT গেটের ভেতর দিয়ে পাঠালে তা OR গেটে পরিণত হয়।" },
+    { q: "২২. (1F)₁₆ এর সমতুল্য বাইনারি মান কত?", options: ["00011111", "00011010", "00111111", "00011100"], ans: 0, exp: "1 = 0001, F = 1111; একসাথে 00011111" },
+    { q: "২৩. প্য্যারেটি বিট (Parity Bit) কেন ব্যবহার করা হয়?", options: ["ডাটা দ্রুত পাঠাতে", "ভুল বা এরর শনাক্ত করতে", "মেমোরি বাড়াতে", "কোড তৈরি করতে"], ans: 1, exp: "ডেটা স্থানান্তরের সময় ভুল (Error Detection) নির্ণয়ের জন্য প্যারেটি বিট যুক্ত করা হয়।" },
+    { q: "২৪. সমতুল্য রেজিস্টার তৈরি করতে কী ব্যবহৃত হয়?", options: ["ক্যাপাসিটর", "ফ্লিপ-ফ্লপ", "ডিকোডার", "এনকোডার"], ans: 1, exp: "একাধিক ফ্লিপ-ফ্লপ একত্র করে ডাটা সংরক্ষণের জন্য রেজিস্টার গঠন করা হয়।" },
+    { q: "২৫. সর্বজনীন গেট (Universal Gate) কোনগুলো?", options: ["AND, OR", "NAND, NOR", "XOR, XNOR", "NOT, AND"], ans: 1, exp: "NAND এবং NOR গেট দিয়ে সব ধরণের মৌলিক গেট তৈরি করা যায় বলে এদের সর্বজনীন গেট বলে।" },
+];
+                    let timerInterval;
+let timeLeft = 25 * 60; // 25 Minutes
+
+function startExam(e) {
+    e.preventDefault();
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('exam-screen').classList.remove('hidden');
+    
+    renderQuestions();
+    startTimer();
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questions-container');
+    container.innerHTML = questions.map((q, index) => `
+        <div class="question-card">
+            <p><strong>${q.q}</strong></p>
+            <div class="options-group">
+                ${q.options.map((opt, i) => `
+                    <label class="option-item">
+                        <input type="radio" name="q${index}" value="${i}"> ${opt}
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function startTimer() {
+    const timerDisplay = document.getElementById('timer');
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        let min = Math.floor(timeLeft / 60);
+        let sec = timeLeft % 60;
+        timerDisplay.textContent = `${min < 10 ? '0':''}${min}:${sec < 10 ? '0':''}${sec}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            alert('সময় শেষ! আপনার পরীক্ষা জমা নেওয়া হচ্ছে।');
+            submitExam();
+        }
+    }, 1000);
+}
+
+function submitExam() {
+    clearInterval(timerInterval);
+    const name = document.getElementById('student-name').value;
+    const roll = document.getElementById('student-roll').value;
+    
+    let score = 0;
+    let reviewHTML = '';
+
+    questions.forEach((q, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        const userAns = selected ? parseInt(selected.value) : -1;
+        const isCorrect = userAns === q.ans;
+        
+        if (isCorrect) score++;
+
+        reviewHTML += `
+            <div class="ans-review">
+                <p><strong>${q.q}</strong></p>
+                <p>আপনার উত্তর: ${userAns !== -1 ? q.options[userAns] : '<span class="wrong">উত্তর দেওয়া হয়নি</span>'}</p>
+                <p class="${isCorrect ? 'correct' : 'wrong'}">সঠিক উত্তর: ${q.options[q.ans]}</p>
+                <div class="explanation"><strong>ব্যাখ্যা:</strong> ${q.exp}</div>
+            </div>
+        `;
+    });
+
+    document.getElementById('exam-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    
+    document.getElementById('result-summary').innerHTML = `
+        <h3>পরীক্ষার্থীর নাম: ${name} (রোল: ${roll})</h3>
+        <p style="font-size: 22px; margin-top: 10px;"><strong>মোট নম্বর: ${score} / ২৫</strong></p>
+        <p>শতকরা হার: ${((score / 25) * 100).toFixed(2)}%</p>
+    `;
+
+    document.getElementById('review-container').innerHTML = reviewHTML;
+}
+</script>
+</body>
+</html>
