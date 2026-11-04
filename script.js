@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { questions } from "./questions.js";
 
-// Apnar Firebase Config (Screenshot theke add kora hoyeche)[span_0](start_span)[span_0](end_span)
 const firebaseConfig = {
   apiKey: "AIzaSyCDXgu9AtxKzb0ZLCx5W-gCnN8rY5XHM4g",
   authDomain: "results-66d6b.firebaseapp.com",
@@ -16,15 +15,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let index = 0, score = 0, userAnswers = [], student = {}, timer;
+let student = {}, timer;
 let timeLeft = 25 * 60; // 25 minutes
 
 const loginContainer = document.getElementById('login-container');
 const examContainer = document.getElementById('exam-container');
 const resultContainer = document.getElementById('result-container');
 const studentForm = document.getElementById('studentForm');
-const questionBox = document.getElementById('question-box');
-const nextBtn = document.getElementById('next-btn');
+const allQuestionsBox = document.getElementById('all-questions-box');
+const submitExamBtn = document.getElementById('submit-exam-btn');
 
 studentForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -34,10 +33,10 @@ studentForm.addEventListener('submit', (e) => {
 
     loginContainer.classList.add('hidden');
     examContainer.classList.remove('hidden');
-    document.getElementById('student-info-display').innerText = `Nam: ${student.name} | Roll: ${student.roll}`;
+    document.getElementById('student-info-display').innerText = `নাম: ${student.name} | রোল: ${student.roll}`;
     
     startTimer();
-    loadQ();
+    loadAllQuestions();
 });
 
 function startTimer() {
@@ -45,52 +44,69 @@ function startTimer() {
         let m = Math.floor(timeLeft / 60);
         let s = timeLeft % 60;
         document.getElementById('time').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-        if (timeLeft <= 0) { clearInterval(timer); submitExam(); }
+        if (timeLeft <= 0) { 
+            clearInterval(timer); 
+            submitExam(); 
+        }
         timeLeft--;
     }, 1000);
 }
 
-function loadQ() {
-    let q = questions[index];
+// Shob proshno ek shathe render korar function
+function loadAllQuestions() {
     let html = '';
-    q.options.forEach(opt => {
-        html += `<label class="option-label"><input type="radio" name="opt" value="${opt}"> ${opt}</label>`;
+    questions.forEach((q, index) => {
+        let optionsHtml = '';
+        q.options.forEach(opt => {
+            optionsHtml += `
+                <label class="option-label">
+                    <input type="radio" name="question_${index}" value="${opt}"> ${opt}
+                </label>`;
+        });
+
+        html += `
+            <div class="question-card">
+                <p><b>প্রশ্ন ${index + 1}: ${q.question}</b></p>
+                ${optionsHtml}
+            </div>`;
     });
-    questionBox.innerHTML = `<h3>${q.question}</h3>${html}`;
-    nextBtn.classList.remove('hidden');
+    allQuestionsBox.innerHTML = html;
 }
 
-nextBtn.addEventListener('click', () => {
-    const sel = document.querySelector('input[name="opt"]:checked');
-    if (!sel) { alert("Doya kore ekti uttor nirbachon korun!"); return; }
+submitExamBtn.addEventListener('click', () => {
+    // Confirm message
+    if(!confirm("আপনি কি নিশ্চিতভাবে পরীক্ষা জমা দিতে চান?")) return;
 
-    let ans = sel.value;
-    userAnswers.push({ q: questions[index].question, selected: ans, correct: questions[index].answer });
-    if (ans === questions[index].answer) score++;
-
-    index++;
-    if (index < questions.length) {
-        loadQ();
-    } else {
-        clearInterval(timer);
-        submitExam();
-    }
+    clearInterval(timer);
+    submitExam();
 });
 
 async function submitExam() {
     examContainer.classList.add('hidden');
     resultContainer.classList.remove('hidden');
-    document.getElementById('score-display').innerText = `Apnar mot prapto nombor: ${score} / ${questions.length}`;
 
-    let review = "<h3>Uttor bistarito porjalochona:</h3>";
-    userAnswers.forEach((item, i) => {
-        let correct = item.selected === item.correct;
-        review += `<p><b>Proshno ${i+1}: ${item.q}</b><br>
-        Apnar uttor: <span style="color:${correct ? 'green' : 'red'}">${item.selected}</span><br>
-        Sothik uttor: ${item.correct}</p><hr>`;
+    let score = 0;
+    let reviewHtml = "<h3>উত্তর বিস্তারিত পর্যালোচনা:</h3>";
+
+    questions.forEach((q, index) => {
+        const selectedOption = document.querySelector(`input[name="question_${index}"]:checked`);
+        let userAnswer = selectedOption ? selectedOption.value : "উত্তর দেওয়া হয়নি";
+        let isCorrect = (userAnswer === q.answer);
+
+        if (isCorrect) score++;
+
+        reviewHtml += `
+            <div style="margin-bottom: 15px;">
+                <p><b>প্রশ্ন ${index + 1}: ${q.question}</b><br>
+                আপনার উত্তর: <span style="color:${isCorrect ? 'green' : 'red'}">${userAnswer}</span><br>
+                সঠিক উত্তর: ${q.answer}</p>
+            </div><hr>`;
     });
-    document.getElementById('review-box').innerHTML = review;
 
+    document.getElementById('score-display').innerText = `আপনার মোট প্রাপ্ত নম্বর: ${score} / ${questions.length}`;
+    document.getElementById('review-box').innerHTML = reviewHtml;
+
+    // Firebase-e data save kora
     try {
         await addDoc(collection(db, "ict_chapter3_results"), {
             studentName: student.name,
@@ -99,9 +115,9 @@ async function submitExam() {
             maxScore: questions.length,
             submittedAt: serverTimestamp()
         });
-        console.log("Data successfully saved to Firebase!");
+        console.log("ডাটা সফলভাবে ফায়ারবেজে সংরক্ষিত হয়েছে!");
     } catch (err) {
-        console.error("Data save korte shomossha hoyeche: ", err);
+        console.error("ডাটা সংরক্ষণ করতে সমস্যা হয়েছে: ", err);
     }
-  }
-      
+      }
+                             
