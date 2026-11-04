@@ -3,34 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আইসিটি ৩য় অধ্যায় পরীক্ষা</title>
+    <title>আইসিটি অনলাইন পরীক্ষা</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- লগইন ফর্ম -->
+    <!-- Login Container -->
     <div id="login-container" class="card">
-        <h2>আইসিটি ৩য় অধ্যায় অনলাইন পরীক্ষা</h2>
+        <h2>আইসিটি অনলাইন পরীক্ষা</h2>
+        <p>দয়া করে আপনার নাম এবং রোল নম্বর দিয়ে পরীক্ষায় অংশগ্রহণ করুন।</p>
         <form id="studentForm">
-            <input type="text" id="studentName" placeholder="আপনার নাম লিখুন" required>
+            <input type="text" id="studentName" placeholder="আপনার পুরো নাম লিখুন" required>
             <input type="text" id="rollNumber" placeholder="আপনার রোল নম্বর লিখুন" required>
             <button type="submit" class="btn">পরীক্ষা শুরু করুন</button>
         </form>
     </div>
 
-    <!-- পরীক্ষার ইন্টারফেস -->
+    <!-- Exam Container (Shob proshno ekhane ek shathe thakbe) -->
     <div id="exam-container" class="card hidden">
-        <div id="exam-header">
+        <div class="exam-header">
             <span id="student-info-display"></span>
-            <div id="timer">সময় বাকি: <span id="time">25:00</span></div>
+            <div class="timer-box">সময় বাকি: <span id="time">25:00</span></div>
         </div>
-        <div id="question-box"></div>
-        <button id="next-btn" class="btn hidden">পরবর্তী প্রশ্ন</button>
+        
+        <div id="all-questions-box">
+            <!-- Questions dynamically load hobe -->
+        </div>
+
+        <button id="submit-exam-btn" class="btn">পরীক্ষা জমা দিন</button>
     </div>
 
-    <!-- ফলাফল ইন্টারফেস -->
+    <!-- Result Container -->
     <div id="result-container" class="card hidden">
-        <h2>পরীক্ষা শেষ হয়েছে!</h2>
+        <h2>পরীক্ষার ফলাফল</h2>
         <p id="score-display"></p>
         <div id="review-box"></div>
     </div>
